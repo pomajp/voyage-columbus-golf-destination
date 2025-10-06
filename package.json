@@ -1,0 +1,16 @@
+{
+  "name": "voyage-pitch-deck",
+  "version": "1.0.0",
+  "description": "The Voyage - Interactive Pitch Deck for Columbus Zoo Golf Course",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "python3 -m http.server 8080"
+  },
+  "keywords": ["golf", "columbus", "pitch-deck"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
