@@ -1,30 +1,114 @@
-// Initialize AOS
+// Detect if mobile device
+const isMobile = () => window.innerWidth <= 768;
+
+// Initialize AOS with mobile optimization
 AOS.init({
-    duration: 1000,
+    duration: isMobile() ? 600 : 1000,  // Faster animations on mobile
     once: true,
-    offset: 100
+    offset: isMobile() ? 50 : 100,  // Less offset on mobile
+    disable: false  // Keep animations but optimize them
 });
 
-// Navigation visibility
+// Navigation visibility and progress bar
 window.addEventListener('scroll', function() {
     const nav = document.getElementById('nav');
-    if (window.scrollY > 100) {
+    const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const scrollPosition = window.scrollY;
+    const scrollPercentage = (scrollPosition / scrollHeight) * 100;
+    
+    // Update progress bar
+    const progressBar = document.querySelector('.progress-bar');
+    if (progressBar) {
+        progressBar.style.width = scrollPercentage + '%';
+    }
+    
+    // Show/hide navigation
+    if (scrollPosition > 100) {
         nav.classList.add('visible');
     } else {
         nav.classList.remove('visible');
     }
+    
+    // Update active section dot
+    updateActiveDot();
 });
 
-// Smooth scrolling for navigation links
+// Update active navigation dot based on scroll position
+function updateActiveDot() {
+    const sections = document.querySelectorAll('.section, .hero, .footer');
+    const dots = document.querySelectorAll('.nav-dot');
+    const navLinks = document.querySelectorAll('.nav-link');
+    
+    let currentSection = '';
+    
+    sections.forEach(section => {
+        const rect = section.getBoundingClientRect();
+        if (rect.top <= 100 && rect.bottom >= 100) {
+            currentSection = section.id;
+        }
+    });
+    
+    // Update navigation dots
+    dots.forEach(dot => {
+        if (dot.dataset.section === currentSection) {
+            dot.classList.add('active');
+        } else {
+            dot.classList.remove('active');
+        }
+    });
+    
+    // Update navigation links
+    navLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href === '#' + currentSection) {
+            link.classList.add('active');
+        } else {
+            link.classList.remove('active');
+        }
+    });
+}
+
+// Navigation dots click handler
+document.addEventListener('DOMContentLoaded', function() {
+    const dots = document.querySelectorAll('.nav-dot');
+    dots.forEach(dot => {
+        dot.addEventListener('click', function() {
+            const sectionId = this.dataset.section;
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    });
+});
+
+// Smooth scrolling for navigation links, logo, and next buttons
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
+        const targetId = this.getAttribute('href');
+        const target = document.querySelector(targetId);
         if (target) {
-            target.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
+            // Special handling for mobile next buttons
+            if (this.classList.contains('next-section') && isMobile()) {
+                window.scrollTo({
+                    top: target.offsetTop,
+                    behavior: 'smooth'
+                });
+            } else {
+                target.scrollIntoView({
+                    behavior: isMobile() ? 'auto' : 'smooth',
+                    block: 'start'
+                });
+            }
+            
+            // Update the current section index for keyboard navigation
+            const sectionIds = ['hero', 'opportunity', 'vision', 'courses', 'experience', 'youth', 'financials', 'team', 'ask'];
+            const targetSectionId = targetId.replace('#', '');
+            const index = sectionIds.indexOf(targetSectionId);
+            if (index !== -1) {
+                currentSectionIndex = index;
+            }
         }
     });
 });
@@ -218,11 +302,111 @@ function showContact() {
     alert('Contact form would open here. For now, please reach out directly!');
 }
 
-// Parallax effect for hero
-window.addEventListener('scroll', () => {
-    const scrolled = window.pageYOffset;
-    const hero = document.querySelector('.hero-bg');
-    if (hero) {
-        hero.style.transform = `translateY(${scrolled * 0.5}px)`;
+// Image gallery for Mountains section
+const galleryImages = [
+    {
+        src: 'images/putting-night.jpg',
+        caption: 'Night-lit championship putting green with dramatic lighting and fire pit gathering areas',
+        credit: 'Punchbowl at Bandon Dunes'
+    },
+    {
+        src: 'images/putting-standrews.jpg',
+        caption: 'Inspired by the legendary Himalayas putting course at St Andrews',
+        credit: 'The Himalayas at St Andrews'
+    },
+    {
+        src: 'images/pinehurst-aerial.jpg',
+        caption: 'Pinehurst-style design bringing world-class putting to Ohio',
+        credit: 'Thistle Dew at Pinehurst'
+    },
+    {
+        src: 'images/pinehurst-green.jpg',
+        caption: 'Championship-caliber greens with social gathering spaces',
+        credit: 'The Cradle at Pinehurst'
     }
+];
+
+function changeImage(index) {
+    const mainImage = document.getElementById('mainImage');
+    const caption = document.getElementById('imageCaption');
+    const credit = document.getElementById('imageCredit');
+    const thumbs = document.querySelectorAll('.thumb');
+    
+    if (mainImage && caption && galleryImages[index]) {
+        mainImage.src = galleryImages[index].src;
+        caption.textContent = galleryImages[index].caption;
+        if (credit) {
+            credit.textContent = galleryImages[index].credit;
+        }
+        
+        thumbs.forEach((thumb, i) => {
+            if (i === index) {
+                thumb.classList.add('active');
+            } else {
+                thumb.classList.remove('active');
+            }
+        });
+    }
+}
+
+// Parallax effect for hero (desktop only)
+if (!isMobile()) {
+    window.addEventListener('scroll', () => {
+        const scrolled = window.pageYOffset;
+        const hero = document.querySelector('.hero-bg');
+        if (hero) {
+            hero.style.transform = `translateY(${scrolled * 0.5}px)`;
+        }
+    });
+}
+
+// Keyboard navigation for sections (desktop only)
+let currentSectionIndex = 0;
+const sectionIds = ['hero', 'opportunity', 'vision', 'courses', 'experience', 'youth', 'financials', 'team', 'ask'];
+
+// Only enable keyboard navigation on desktop
+if (!isMobile()) {
+    document.addEventListener('keydown', function(e) {
+        // Arrow down or Page Down
+        if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+            e.preventDefault();
+            if (currentSectionIndex < sectionIds.length - 1) {
+                currentSectionIndex++;
+                document.getElementById(sectionIds[currentSectionIndex]).scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+        // Arrow up or Page Up
+        else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+            e.preventDefault();
+            if (currentSectionIndex > 0) {
+                currentSectionIndex--;
+                document.getElementById(sectionIds[currentSectionIndex]).scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+        // Home key
+        else if (e.key === 'Home') {
+            e.preventDefault();
+            currentSectionIndex = 0;
+            document.getElementById(sectionIds[0]).scrollIntoView({ behavior: 'smooth' });
+        }
+        // End key
+        else if (e.key === 'End') {
+            e.preventDefault();
+            currentSectionIndex = sectionIds.length - 1;
+            document.getElementById(sectionIds[currentSectionIndex]).scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+}
+
+// Update current section index on scroll
+window.addEventListener('scroll', function() {
+    const sections = sectionIds.map(id => document.getElementById(id));
+    sections.forEach((section, index) => {
+        if (section) {
+            const rect = section.getBoundingClientRect();
+            if (rect.top >= -100 && rect.top <= 100) {
+                currentSectionIndex = index;
+            }
+        }
+    });
 });
