@@ -208,16 +208,23 @@ document.addEventListener('DOMContentLoaded', function() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        bottom: 20
+                    }
+                },
                 plugins: {
                     legend: {
-                        position: 'bottom',
+                        position: isMobile() ? 'bottom' : 'right',
                         labels: {
                             color: '#fff',
                             font: {
-                                size: 12
+                                size: isMobile() ? 10 : 12,
                             },
-                            padding: 20
-                        }
+                            padding: isMobile() ? 8 : 15,
+                            boxWidth: isMobile() ? 12 : 20
+                        },
+                        padding: 20
                     },
                     tooltip: {
                         callbacks: {
